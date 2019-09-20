@@ -258,7 +258,7 @@ func (table *CacheTable) Value(key interface{}, args ...interface{}) (*CacheItem
 	if loadData != nil {
 		item := loadData(key, args...)
 		if item != nil {
-			table.Add(key, item.lifeSpan, item.data)
+			table.Add(key, item.lifeSpan, item.value)
 			return item, nil
 		}
 
