@@ -107,19 +107,19 @@ func (table *CacheTable) expirationCheck() {
 		// Cache values so we don't keep blocking the mutex.
 		item.RLock()
 		lifeSpan := item.lifeSpan
-		accessedOn := item.accessedOn
+		accessedAt := item.accessedAt
 		item.RUnlock()
 
 		if lifeSpan == 0 {
 			continue
 		}
-		if now.Sub(accessedOn) >= lifeSpan {
+		if now.Sub(accessedAt) >= lifeSpan {
 			// Item has excessed its lifespan.
 			table.deleteInternal(key)
 		} else {
 			// Find the item chronologically closest to its end-of-lifespan.
-			if smallestDuration == 0 || lifeSpan-now.Sub(accessedOn) < smallestDuration {
-				smallestDuration = lifeSpan - now.Sub(accessedOn)
+			if smallestDuration == 0 || lifeSpan-now.Sub(accessedAt) < smallestDuration {
+				smallestDuration = lifeSpan - now.Sub(accessedAt)
 			}
 		}
 	}
@@ -192,14 +192,14 @@ func (table *CacheTable) deleteInternal(key interface{}) (*CacheItem, error) {
 
 	r.RLock()
 	defer r.RUnlock()
-	if r.aboutToExpire != nil {
-		for _, callback := range r.aboutToExpire {
+	if r.expireTrigger != nil {
+		for _, callback := range r.expireTrigger {
 			callback(key)
 		}
 	}
 
 	table.Lock()
-	table.log("Deleting item with key", key, "created on", r.createdOn, "and hit", r.accessCount, "times from table", table.name)
+	table.log("Deleting item with key", key, "created on", r.createdAt, "and hit", r.accessCount, "times from table", table.name)
 	delete(table.items, key)
 
 	return r, nil
